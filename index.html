@@ -29,6 +29,14 @@
   #langlist button{border:0;background:none;color:var(--ink);font:inherit;padding:.7rem .8rem;border-radius:1rem;cursor:pointer;text-align:left;min-height:2.75rem}
   #langlist button:hover{background:var(--bg)}
   #langlist button[aria-pressed=true]{background:var(--lilac);font-weight:600}
+  #bar{display:flex;align-items:center;gap:.75rem}
+  .sw{position:relative;display:inline-flex;align-items:center;width:5rem;height:2.75rem;border-radius:2rem;background:var(--card);
+    box-shadow:0 2px 14px #7a6bb41a;cursor:pointer;font-weight:600;font-size:.9rem;user-select:none}
+  .sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+  .sw i{position:absolute;top:.25rem;left:.25rem;width:2.25rem;height:2.25rem;border-radius:50%;background:var(--lilac);transition:transform .2s}
+  .sw input:checked~i{transform:translateX(2.25rem)}
+  .sw input:focus-visible~i{outline:2px solid var(--accent)}
+  .sw span{position:relative;flex:1;text-align:center;pointer-events:none}
   .grid{display:flex;flex-wrap:wrap;justify-content:center;gap:1rem}
   .grid>.card{flex:1 1 16rem}
   .card{background:var(--card);border-radius:1.5rem;padding:1.25rem;box-shadow:0 2px 14px #7a6bb41a}
@@ -63,8 +71,9 @@
 </style>
 <main>
   <header><h1 data-i18n="title"></h1>
+    <div id="bar"><label class="sw"><input type="checkbox" id="unit" role="switch" aria-label="°C / °F"><i></i><span>°C</span><span>°F</span></label>
     <details id="langmenu"><summary data-aria="lang" aria-label="Language"><span aria-hidden="true">🌐</span><span id="langcur"></span></summary>
-      <div id="langlist"></div></details></header>
+      <div id="langlist"></div></details></div></header>
   <form id="f" class="grid" onsubmit="return false">
     <section class="card" id="cin"><h2 data-i18n="indoor"></h2></section>
     <section class="card" id="cout"><h2 data-i18n="outdoor"></h2></section>
@@ -174,12 +183,14 @@ const FIELDS = [
 ];
 for (const [card, k, label, unit, min, max, step, val] of FIELDS)
   document.getElementById(card).insertAdjacentHTML("beforeend", `
-    <div class="f"><div class="row"><span data-i18n="${label}"></span><span>${unit}</span></div>
+    <div class="f"><div class="row"><span data-i18n="${label}"></span><span${k[0] == "t" ? ' class="u"' : ""}>${unit}</span></div>
       <div class="num"><button type="button" data-k="${k}" data-d="-${step}" data-aria="dec">−</button>
         <input name="${k}" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${val}">
         <button type="button" data-k="${k}" data-d="${step}" data-aria="inc">+</button></div>
       <input type="range" data-r="${k}" min="${min}" max="${max}" step="${step}" value="${val}" data-aria="${label}"></div>`);
 
+let F = false;                               // display unit; inputs hold °F when true
+const toC = x => F ? (x - 32) * 5 / 9 : x;
 const num = k => f.elements[k], rng = k => f.querySelector(`[data-r=${k}]`);
 f.addEventListener("click", e => {          // +/- buttons
   const b = e.target.closest("button"); if (!b) return;
@@ -192,9 +203,24 @@ function sync(k, fromRange) {
   calc();
 }
 
+unit.addEventListener("change", () => {
+  F = unit.checked;
+  for (const [, k, , , min, max, step] of FIELDS) {
+    if (k[0] !== "t") continue;
+    const c = x => F ? x * 9 / 5 + 32 : x, st = F ? 1 : step;
+    const n = num(k), r = rng(k), [dec, inc] = f.querySelectorAll(`button[data-k=${k}]`);
+    n.min = r.min = F ? Math.round(c(min)) : min; n.max = r.max = F ? Math.round(c(max)) : max; n.step = r.step = st;
+    dec.dataset.d = -st; inc.dataset.d = st;
+    n.value = r.value = Math.round(c(F ? +n.value : (+n.value - 32) * 5 / 9) * 10) / 10;
+  }
+  for (const e of f.querySelectorAll(".u")) e.textContent = F ? "°F" : "°C";
+  calc();
+});
+
 function calc() {
   const v = Object.fromEntries(FIELDS.map(([, k]) => [k, +num(k).value]));
   if (Object.values(v).some(Number.isNaN)) return;
+  v.ti = toC(v.ti); v.to = toC(v.to);
   const i = ah(v.ti, v.hi), o = ah(v.to, v.ho), d = o - i;
   const rhIn = 100 * o / ah(v.ti, 100);     // outdoor air warmed to indoor temp
   // Energy for one full room-air swap (+ = you lose heat). Sensible: 1.2 kg/m³ × 1.005 kJ/kg/K ≈ 0.335 Wh/m³/K.
@@ -205,7 +231,7 @@ function calc() {
   out.style.background = `var(${colour})`;
   const dT = Math.abs(v.ti - v.to);         // ponytail: thresholds are rules of thumb, tune to taste
   const strength = dT < 5 ? L.mild : dT < 15 ? L.moderate : L.strong;
-  const heat = `<div class="stat"><b>${v.ti > v.to ? L.heatLoss : L.heatGain}${L.colon ?? ":"} ${strength}</b><span>${dT.toFixed(1)} °C ${L.diff}</span></div>`;
+  const heat = `<div class="stat"><b>${v.ti > v.to ? L.heatLoss : L.heatGain}${L.colon ?? ":"} ${strength}</b><span>${(F ? dT * 1.8 : dT).toFixed(1)} ${F ? "°F" : "°C"} ${L.diff}</span></div>`;
   const hum = `<div class="stat"><b>${d > 0 ? "+" : ""}${d.toFixed(1)} g/m³</b><span>${d > 0 ? L.gained : L.lost} ${L.perM3}</span></div>`;
   out.innerHTML = `<div class="big">${verdict}</div>` + (!adv.open ? `<div class="stats">${hum}${heat}</div>` : `<div class="stats">${hum}${heat}
     <div class="stat"><b>${i.toFixed(1)}</b><span>${L.inAH}</span></div>
