@@ -192,6 +192,10 @@ const T = {
     lang: "زبان", privacy: "کوئی کوکیز استعمال نہیں ہوتیں اور کوئی معلومات کسی سرور کو نہیں بھیجی جاتیں۔ اس آلے پر صرف آپ کی زبان اور درجۂ حرارت کی اکائی محفوظ ہوتی ہے۔", aiNote: "ترجمے AI سے تیار کیے گئے ہیں۔", aiIssue: "کوئی غلطی دیکھی؟ GitHub پر issue کھولیں" },
   ja: { name: "日本語", page: "窓の湿度計算ツール", title: "窓を開ける？", indoor: "室内", outdoor: "屋外", room: "部屋", advanced: "詳細", temp: "温度", rh: "相対湿度", vol: "部屋の容積", dec: "減らす", inc: "増やす", neutral: "中立：湿度の変化はわずか", bring: "開けると湿気が入る", escape: "開けると湿気が逃げる", heatLoss: "熱損失", heatGain: "熱取得", mild: "小", moderate: "中", strong: "大", diff: "の差", gained: "湿気が増加", lost: "湿気が減少", perM3: "（入れ替える空気 1 m³ あたり）", inAH: "室内 g/m³", outAH: "屋外 g/m³", rhWarm: "外気を室温まで暖めたときの相対湿度", sensLost: "空気を完全に入れ替えたときに失う顕熱", sensGained: "空気を完全に入れ替えたときに得る顕熱", water: "入れ替わる水分（≈ {n} Wh の潜熱）", bounds: "上限値：部屋の空気が一度完全に入れ替わると仮定しています。",
     colon: "：", lang: "言語", privacy: "Cookie は使用せず、情報をサーバーに送信することもありません。この端末に保存されるのは言語と温度単位のみです。", aiNote: "翻訳は AI によって生成されています。", aiIssue: "誤りを見つけましたか？GitHub で issue を作成してください" },
+  ko: { name: "한국어", page: "창문 습도 계산기", title: "창문을 열까요?", indoor: "실내", outdoor: "실외", room: "방", advanced: "고급", temp: "온도", rh: "상대 습도", vol: "방 부피", dec: "줄이기", inc: "늘리기", neutral: "중립: 습도 변화가 거의 없음", bring: "창문을 열면 습기가 들어옵니다", escape: "창문을 열면 습기가 빠져나갑니다", heatLoss: "열 손실", heatGain: "열 획득", mild: "약함", moderate: "보통", strong: "강함", diff: "차이", gained: "습기 증가", lost: "습기 감소", perM3: "(교체되는 공기 1 m³당)", inAH: "실내 g/m³", outAH: "실외 g/m³", rhWarm: "외부 공기를 실내 온도로 데웠을 때의 상대 습도", sensLost: "공기를 완전히 교체할 때 잃는 현열", sensGained: "공기를 완전히 교체할 때 얻는 현열", water: "교환되는 수분 (≈ {n} Wh 잠열)", bounds: "상한값: 방의 공기가 한 번 완전히 교체된다고 가정합니다.",
+    lang: "언어", privacy: "쿠키를 사용하지 않으며 어떤 정보도 서버로 전송되지 않습니다. 이 기기에는 언어와 온도 단위만 저장됩니다.", aiNote: "번역은 AI로 생성되었습니다.", aiIssue: "오류를 발견하셨나요? GitHub에 issue를 열어 주세요" },
+  tr: { name: "Türkçe", page: "Pencere nem hesaplayıcı", title: "Pencereyi açayım mı?", indoor: "İç ortam", outdoor: "Dış ortam", room: "Oda", advanced: "Gelişmiş", temp: "Sıcaklık", rh: "Bağıl nem", vol: "Oda hacmi", dec: "azalt", inc: "artır", neutral: "Nötr: nemde az değişim", bring: "Açmak içeriye nem getirir", escape: "Açmak nemin dışarı çıkmasını sağlar", heatLoss: "Isı kaybı", heatGain: "Isı kazancı", mild: "hafif", moderate: "orta", strong: "güçlü", diff: "fark", gained: "nem kazancı", lost: "nem kaybı", perM3: "değiştirilen her m³ hava için", inAH: "iç ortam g/m³", outAH: "dış ortam g/m³", rhWarm: "dış hava ısındığında bağıl nem", sensLost: "tam hava değişiminde kaybedilen duyulur ısı", sensGained: "tam hava değişiminde kazanılan duyulur ısı", water: "değişen su (≈ {n} Wh gizli ısı)", bounds: "Üst sınırlar: oda havasının bir kez tamamen değiştiği varsayılır.",
+    lang: "Dil", privacy: "Çerez kullanılmaz ve hiçbir bilgi bir sunucuya gönderilmez. Bu cihazda yalnızca diliniz ve sıcaklık biriminiz kaydedilir.", aiNote: "Çeviriler yapay zekâ ile oluşturulmuştur.", aiIssue: "Bir hata mı gördünüz? GitHub'da bir issue açın" },
 };
 let L = T.en;
 try { L = T[localStorage.lang] || T[navigator.language.slice(0, 2)] || T.en; } catch { L = T[navigator.language.slice(0, 2)] || T.en; }
@@ -277,7 +281,7 @@ function applyLang() {
 }
 const FLAG = { en: "🇬🇧", it: "🇮🇹", fr: "🇫🇷", de: "🇩🇪", es: "🇪🇸", pt: "🇵🇹", nl: "🇳🇱", pl: "🇵🇱", ro: "🇷🇴", sv: "🇸🇪", da: "🇩🇰", fi: "🇫🇮",
   cs: "🇨🇿", sk: "🇸🇰", hu: "🇭🇺", bg: "🇧🇬", el: "🇬🇷", hr: "🇭🇷", sl: "🇸🇮", et: "🇪🇪", lv: "🇱🇻", lt: "🇱🇹", mt: "🇲🇹", ga: "🇮🇪",
-  zh: "🇨🇳", hi: "🇮🇳", ar: "🇸🇦", bn: "🇧🇩", ru: "🇷🇺", ur: "🇵🇰", ja: "🇯🇵" };
+  zh: "🇨🇳", hi: "🇮🇳", ar: "🇸🇦", bn: "🇧🇩", ru: "🇷🇺", ur: "🇵🇰", ja: "🇯🇵", ko: "🇰🇷", tr: "🇹🇷" };
 let cur = Object.keys(T).find(k => T[k] === L);
 langlist.innerHTML = Object.entries(T).map(([c, t]) => `<button type="button" data-l="${c}" lang="${c}">${FLAG[c]} ${t.name}</button>`).join("");
 langlist.addEventListener("click", e => {
