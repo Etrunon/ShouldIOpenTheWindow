@@ -203,6 +203,15 @@ const T = {
   id: { name: "Bahasa Indonesia", page: "Kalkulator kelembapan jendela", title: "Buka jendela?", indoor: "Dalam ruangan", outdoor: "Luar ruangan", room: "Ruangan", advanced: "Lanjutan", temp: "Suhu", rh: "Kelembapan relatif", vol: "Volume ruangan", dec: "kurangi", inc: "tambah", neutral: "Netral: perubahan kelembapan kecil", bring: "Membuka jendela memasukkan kelembapan", escape: "Membuka jendela membuang kelembapan", heatLoss: "Kehilangan panas", heatGain: "Penambahan panas", mild: "ringan", moderate: "sedang", strong: "kuat", diff: "selisih", gained: "kelembapan bertambah", lost: "kelembapan berkurang", perM3: "per m³ udara yang diganti", inAH: "dalam ruangan g/m³", outAH: "luar ruangan g/m³", rhWarm: "kelembapan relatif setelah udara luar dihangatkan", sensLost: "panas sensibel yang hilang per penggantian penuh", sensGained: "panas sensibel yang didapat per penggantian penuh", water: "air yang berpindah (≈ {n} Wh panas laten)", bounds: "Batas atas: diasumsikan udara ruangan diganti sepenuhnya satu kali.",
     lang: "Bahasa", privacy: "Tidak ada cookie yang digunakan dan tidak ada informasi yang dikirim ke server mana pun. Hanya bahasa dan satuan suhu yang disimpan di perangkat ini.", aiNote: "Terjemahan dibuat dengan AI.", aiIssue: "Menemukan kesalahan? Buka issue di GitHub" },
 };
+T.tlh = { name: "tlhIngan Hol", page: "Qorwagh bIQ mI'", title: "Qorwagh poSmoH'a'?", indoor: "pa'Daq", outdoor: "Hop", room: "pa'",
+  advanced: "chav", temp: "tuj", rh: "bIQ ghaH'a' (%)", vol: "pa' Dun", dec: "bach", inc: "'un",
+  neutral: "bIQ mach choH", bring: "poSmoHDI' bIQ ghoS", escape: "poSmoHDI' bIQ Hegh",
+  heatLoss: "tuj Hegh", heatGain: "tuj ghoS", mild: "mach", moderate: "Dun", strong: "HoS", diff: "pat",
+  gained: "bIQ ghoS", lost: "bIQ Hegh", perM3: "m³ SIbI' choH",
+  inAH: "pa'Daq g/m³", outAH: "Hop g/m³", rhWarm: "RH tuj Hop SIbI'",
+  sensLost: "tuj Hegh SIbI' Hoch", sensGained: "tuj ghoS SIbI' Hoch",
+  water: "bIQ choH (≈ {n} Wh)", bounds: "Dun 'oS: pa' SIbI' Hoch pIj choH.",
+  lang: "Hol", privacy: "'ay'wI' Hutlh. De' ghaytan Daq vay' ratlh. Hol tuj Dun neH pe'vIl yIt.", aiNote: "Hol choHmoHta' AI.", aiIssue: "Qagh DaSov'a'? GitHub Daq yIghItlh" };
 T.sp = { ...T.en, name: "Space" };           // easter egg: English text, temperatures in Kelvin
 let L = T.en;
 try { L = T[localStorage.lang] || T[navigator.language.slice(0, 2)] || T.en; } catch { L = T[navigator.language.slice(0, 2)] || T.en; }
@@ -294,7 +303,7 @@ function applyLang() {
   calc();
 }
 const FLAG = { en: "🇬🇧", it: "🇮🇹", fr: "🇫🇷", de: "🇩🇪", es: "🇪🇸", pt: "🇵🇹", nl: "🇳🇱", pl: "🇵🇱", ro: "🇷🇴", sv: "🇸🇪", da: "🇩🇰", fi: "🇫🇮",
-  cs: "🇨🇿", sk: "🇸🇰", hu: "🇭🇺", bg: "🇧🇬", el: "🇬🇷", hr: "🇭🇷", sl: "🇸🇮", et: "🇪🇪", lv: "🇱🇻", lt: "🇱🇹", mt: "🇲🇹", ga: "🇮🇪", sp: "🖖",
+  cs: "🇨🇿", sk: "🇸🇰", hu: "🇭🇺", bg: "🇧🇬", el: "🇬🇷", hr: "🇭🇷", sl: "🇸🇮", et: "🇪🇪", lv: "🇱🇻", lt: "🇱🇹", mt: "🇲🇹", ga: "🇮🇪", sp: "🖖", tlh: "🗡️",
   zh: "🇨🇳", hi: "🇮🇳", ar: "🇸🇦", bn: "🇧🇩", ru: "🇷🇺", ur: "🇵🇰", ja: "🇯🇵", ko: "🇰🇷", tr: "🇹🇷", vi: "🇻🇳", id: "🇮🇩" };
 let cur = Object.keys(T).find(k => T[k] === L);
 langlist.innerHTML = Object.entries(T).map(([c, t]) => `<button type="button" data-l="${c}" lang="${c}">${FLAG[c]} ${t.name}</button>`).join("");
