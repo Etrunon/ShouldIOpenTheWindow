@@ -24,9 +24,8 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
   main{max-width:56rem;margin:0 auto;padding:1.5rem 16px 3rem}
-  header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1rem;margin:.5rem 0 1.25rem}
+  header{position:relative;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1rem;margin:.5rem 0 1.25rem}
   h1{font-size:1.75rem;margin:0;letter-spacing:-.02em}
-  #langmenu{position:relative}
   #langmenu summary{display:flex;align-items:center;gap:.5rem;list-style:none;cursor:pointer;padding:.7rem 1.2rem;border-radius:2rem;
     background:var(--card);color:var(--accent);font-weight:600;box-shadow:0 2px 14px #7a6bb41a;user-select:none}
   #langmenu summary::-webkit-details-marker{display:none}
@@ -81,7 +80,7 @@
 <main>
   <header><h1 data-i18n="title">Open the window?</h1>
     <div id="bar"><label class="sw"><input type="checkbox" id="unit" role="switch" aria-label="°C / °F"><i></i><span>°C</span><span>°F</span></label>
-    <details id="langmenu"><summary data-aria="lang" aria-label="Language"><span aria-hidden="true">🌐</span><span id="langcur">English</span></summary>
+    <details id="langmenu"><summary data-aria="lang" aria-label="Language"><span id="langcur">🇬🇧 English</span></summary>
       <div id="langlist"></div></details></div></header>
   <form id="f" class="grid" onsubmit="return false">
     <section class="card" id="cin"><h2 data-i18n="indoor">Indoor</h2></section>
@@ -254,7 +253,7 @@ function calc() {
 }
 function applyLang() {
   document.documentElement.lang = cur; document.title = L.page;
-  langcur.textContent = L.name;
+  langcur.textContent = `${FLAG[cur]} ${L.name}`;
   ainote.hidden = cur === "en" || cur === "it";
   issue.href = `https://github.com/Etrunon/ShouldIOpenTheWindow/issues/new?title=${encodeURIComponent(`Translation mistake (${cur})`)}`;
   for (const b of langlist.children) b.setAttribute("aria-pressed", b.dataset.l === cur);
@@ -262,8 +261,10 @@ function applyLang() {
   for (const e of document.querySelectorAll("[data-aria]")) e.setAttribute("aria-label", L[e.dataset.aria]);
   calc();
 }
+const FLAG = { en: "🇬🇧", it: "🇮🇹", fr: "🇫🇷", de: "🇩🇪", es: "🇪🇸", pt: "🇵🇹", nl: "🇳🇱", pl: "🇵🇱", ro: "🇷🇴", sv: "🇸🇪", da: "🇩🇰", fi: "🇫🇮",
+  cs: "🇨🇿", sk: "🇸🇰", hu: "🇭🇺", bg: "🇧🇬", el: "🇬🇷", hr: "🇭🇷", sl: "🇸🇮", et: "🇪🇪", lv: "🇱🇻", lt: "🇱🇹", mt: "🇲🇹", ga: "🇮🇪" };
 let cur = Object.keys(T).find(k => T[k] === L);
-langlist.innerHTML = Object.entries(T).map(([c, t]) => `<button type="button" data-l="${c}" lang="${c}">${t.name}</button>`).join("");
+langlist.innerHTML = Object.entries(T).map(([c, t]) => `<button type="button" data-l="${c}" lang="${c}">${FLAG[c]} ${t.name}</button>`).join("");
 langlist.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   cur = b.dataset.l; L = T[cur]; try { localStorage.lang = cur; } catch {}
