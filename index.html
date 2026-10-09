@@ -23,6 +23,8 @@
   }}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+  .space body{background:radial-gradient(1px 1px at 20px 30px,#fff,transparent),radial-gradient(1.5px 1.5px at 90px 80px,#cfe0ff,transparent),radial-gradient(1px 1px at 150px 20px,#fff,transparent),linear-gradient(#050b2e,#0b2a6f);background-size:180px 120px,180px 120px,180px 120px,100% 100%;background-attachment:fixed}
+  .space h1,.space #privacy,.space #credit{color:#eeecf7}
   main{max-width:56rem;margin:0 auto;padding:1.5rem 16px 3rem}
   header{position:relative;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1rem;margin:.5rem 0 1.25rem}
   h1{font-size:1.75rem;margin:0;letter-spacing:-.02em}
@@ -201,6 +203,7 @@ const T = {
   id: { name: "Bahasa Indonesia", page: "Kalkulator kelembapan jendela", title: "Buka jendela?", indoor: "Dalam ruangan", outdoor: "Luar ruangan", room: "Ruangan", advanced: "Lanjutan", temp: "Suhu", rh: "Kelembapan relatif", vol: "Volume ruangan", dec: "kurangi", inc: "tambah", neutral: "Netral: perubahan kelembapan kecil", bring: "Membuka jendela memasukkan kelembapan", escape: "Membuka jendela membuang kelembapan", heatLoss: "Kehilangan panas", heatGain: "Penambahan panas", mild: "ringan", moderate: "sedang", strong: "kuat", diff: "selisih", gained: "kelembapan bertambah", lost: "kelembapan berkurang", perM3: "per m³ udara yang diganti", inAH: "dalam ruangan g/m³", outAH: "luar ruangan g/m³", rhWarm: "kelembapan relatif setelah udara luar dihangatkan", sensLost: "panas sensibel yang hilang per penggantian penuh", sensGained: "panas sensibel yang didapat per penggantian penuh", water: "air yang berpindah (≈ {n} Wh panas laten)", bounds: "Batas atas: diasumsikan udara ruangan diganti sepenuhnya satu kali.",
     lang: "Bahasa", privacy: "Tidak ada cookie yang digunakan dan tidak ada informasi yang dikirim ke server mana pun. Hanya bahasa dan satuan suhu yang disimpan di perangkat ini.", aiNote: "Terjemahan dibuat dengan AI.", aiIssue: "Menemukan kesalahan? Buka issue di GitHub" },
 };
+T.sp = { ...T.en, name: "Space" };           // easter egg: English text, temperatures in Kelvin
 let L = T.en;
 try { L = T[localStorage.lang] || T[navigator.language.slice(0, 2)] || T.en; } catch { L = T[navigator.language.slice(0, 2)] || T.en; }
 
@@ -220,8 +223,9 @@ for (const [card, k, label, unit, min, max, step, val] of FIELDS)
         <button type="button" data-k="${k}" data-d="${step}" data-aria="inc">+</button></div>
       <input type="range" data-r="${k}" min="${min}" max="${max}" step="${step}" value="${val}" data-aria="${label}"></div>`);
 
-let F = false;                               // display unit; inputs hold °F when true
-const toC = x => F ? (x - 32) * 5 / 9 : x;
+let U = "C";                                 // display unit; temp inputs hold this unit
+const toC = x => U == "F" ? (x - 32) * 5 / 9 : U == "K" ? x - 273.15 : x;
+const fromC = c => U == "F" ? c * 9 / 5 + 32 : U == "K" ? c + 273.15 : c;
 const num = k => f.elements[k], rng = k => f.querySelector(`[data-r=${k}]`);
 f.addEventListener("click", e => {          // +/- buttons
   const b = e.target.closest("button"); if (!b) return;
@@ -234,19 +238,23 @@ function sync(k, fromRange) {
   calc();
 }
 
-unit.addEventListener("change", () => {
-  F = unit.checked;
-  try { localStorage.unit = F ? "F" : "C"; } catch {}
-  for (const [, k, , , min, max, step] of FIELDS) {
-    if (k[0] !== "t") continue;
-    const c = x => F ? x * 9 / 5 + 32 : x, st = F ? 1 : step;
-    const n = num(k), r = rng(k), [dec, inc] = f.querySelectorAll(`button[data-k=${k}]`);
-    n.min = r.min = F ? Math.round(c(min)) : min; n.max = r.max = F ? Math.round(c(max)) : max; n.step = r.step = st;
+function applyUnit() {                       // space language forces Kelvin; otherwise the °C/°F switch decides
+  const u = cur === "sp" ? "K" : unit.checked ? "F" : "C";
+  if (u === U) return;
+  const cs = FIELDS.filter(x => x[1][0] == "t").map(x => toC(+num(x[1]).value)); U = u;
+  for (const [, k, , , min, max, step] of FIELDS.filter(x => x[1][0] == "t")) {
+    const n = num(k), r = rng(k), [dec, inc] = f.querySelectorAll(`button[data-k=${k}]`), st = U == "C" ? step : 1;
+    const c = cs.shift(), lo = U == "K" ? 0 : Math.round(fromC(min)), hi = U == "K" ? 50000 : U == "F" ? Math.round(fromC(max)) : max;
+    n.min = r.min = U == "C" ? min : lo; n.max = r.max = hi; n.step = r.step = st;
     dec.dataset.d = -st; inc.dataset.d = st;
-    n.value = r.value = Math.round(c(F ? +n.value : (+n.value - 32) * 5 / 9) * 10) / 10;
+    n.value = r.value = Math.min(hi, Math.max(lo, Math.round(fromC(c) * 10) / 10));
   }
-  for (const e of f.querySelectorAll(".u")) e.textContent = F ? "°F" : "°C";
-  calc();
+  for (const e of f.querySelectorAll(".u")) e.textContent = "°" + U;
+  document.querySelector(".sw").style.display = U == "K" ? "none" : "";
+}
+unit.addEventListener("change", () => {
+  try { localStorage.unit = unit.checked ? "F" : "C"; } catch {}
+  applyUnit(); calc();
 });
 
 function calc() {
@@ -263,7 +271,7 @@ function calc() {
   out.style.background = `var(${colour})`;
   const dT = Math.abs(v.ti - v.to);         // ponytail: thresholds are rules of thumb, tune to taste
   const strength = dT < 5 ? L.mild : dT < 15 ? L.moderate : L.strong;
-  const heat = `<div class="stat"><b>${v.ti > v.to ? L.heatLoss : L.heatGain}${L.colon ?? ":"} ${strength}</b><span>${(F ? dT * 1.8 : dT).toFixed(1)} ${F ? "°F" : "°C"} ${L.diff}</span></div>`;
+  const heat = `<div class="stat"><b>${v.ti > v.to ? L.heatLoss : L.heatGain}${L.colon ?? ":"} ${strength}</b><span>${(U == "F" ? dT * 1.8 : dT).toFixed(1)} °${U} ${L.diff}</span></div>`;
   const hum = `<div class="stat"><b>${d > 0 ? "+" : ""}${d.toFixed(1)} g/m³</b><span>${d > 0 ? L.gained : L.lost} ${L.perM3}</span></div>`;
   out.innerHTML = `<div class="big">${verdict}</div>` + (!adv.open ? `<div class="stats">${hum}${heat}</div>` : `<div class="stats">${hum}${heat}
     <div class="stat"><b>${i.toFixed(1)}</b><span>${L.inAH}</span></div>
@@ -274,9 +282,11 @@ function calc() {
     <small>${L.bounds}</small>`);
 }
 function applyLang() {
+  document.documentElement.classList.toggle("space", cur === "sp");
   document.documentElement.lang = cur; document.documentElement.dir = cur === "ar" || cur === "ur" ? "rtl" : "ltr"; document.title = L.page;
   langcur.textContent = `${FLAG[cur]} ${L.name}`;
-  ainote.hidden = cur === "en" || cur === "it";
+  ainote.hidden = cur === "en" || cur === "it" || cur === "sp";
+  applyUnit();
   issue.href = `https://github.com/Etrunon/ShouldIOpenTheWindow/issues/new?title=${encodeURIComponent(`Translation mistake (${cur})`)}`;
   for (const b of langlist.children) b.setAttribute("aria-pressed", b.dataset.l === cur);
   for (const e of document.querySelectorAll("[data-i18n]")) e.textContent = L[e.dataset.i18n];
@@ -284,7 +294,7 @@ function applyLang() {
   calc();
 }
 const FLAG = { en: "🇬🇧", it: "🇮🇹", fr: "🇫🇷", de: "🇩🇪", es: "🇪🇸", pt: "🇵🇹", nl: "🇳🇱", pl: "🇵🇱", ro: "🇷🇴", sv: "🇸🇪", da: "🇩🇰", fi: "🇫🇮",
-  cs: "🇨🇿", sk: "🇸🇰", hu: "🇭🇺", bg: "🇧🇬", el: "🇬🇷", hr: "🇭🇷", sl: "🇸🇮", et: "🇪🇪", lv: "🇱🇻", lt: "🇱🇹", mt: "🇲🇹", ga: "🇮🇪",
+  cs: "🇨🇿", sk: "🇸🇰", hu: "🇭🇺", bg: "🇧🇬", el: "🇬🇷", hr: "🇭🇷", sl: "🇸🇮", et: "🇪🇪", lv: "🇱🇻", lt: "🇱🇹", mt: "🇲🇹", ga: "🇮🇪", sp: "🖖",
   zh: "🇨🇳", hi: "🇮🇳", ar: "🇸🇦", bn: "🇧🇩", ru: "🇷🇺", ur: "🇵🇰", ja: "🇯🇵", ko: "🇰🇷", tr: "🇹🇷", vi: "🇻🇳", id: "🇮🇩" };
 let cur = Object.keys(T).find(k => T[k] === L);
 langlist.innerHTML = Object.entries(T).map(([c, t]) => `<button type="button" data-l="${c}" lang="${c}">${FLAG[c]} ${t.name}</button>`).join("");
