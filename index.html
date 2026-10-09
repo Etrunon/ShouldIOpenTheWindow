@@ -29,10 +29,11 @@
   #langlist button{border:0;background:none;color:var(--ink);font:inherit;padding:.7rem .8rem;border-radius:1rem;cursor:pointer;text-align:left;min-height:2.75rem}
   #langlist button:hover{background:var(--bg)}
   #langlist button[aria-pressed=true]{background:var(--lilac);font-weight:600}
-  .grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr))}
+  .grid{display:flex;flex-wrap:wrap;justify-content:center;gap:1rem}
+  .grid>.card{flex:1 1 16rem}
   .card{background:var(--card);border-radius:1.5rem;padding:1.25rem;box-shadow:0 2px 14px #7a6bb41a}
-  .card h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1rem;
-    display:inline-block;padding:.3rem .8rem;border-radius:2rem;color:var(--ink)}
+  .card h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;margin:0 auto 1rem;
+    display:block;width:fit-content;padding:.3rem .8rem;border-radius:2rem;color:var(--ink)}
   #cin h2{background:var(--lilac)} #cout h2{background:var(--sky)} #croom h2{background:var(--peach)}
   .f{margin-bottom:1.1rem}
   .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;color:var(--mute);font-size:.9rem}
@@ -49,21 +50,21 @@
   .stat{background:#ffffff88;border-radius:1rem;padding:.75rem 1rem}
   @media (prefers-color-scheme:dark){.stat{background:#00000026}}
   .stat b{display:block;font-size:1.3rem}.stat span{color:var(--mute);font-size:.8rem}
-  #adv{grid-column:1/-1}
+  #adv{flex-basis:100%}
   #adv summary{display:inline-block;list-style:none;cursor:pointer;padding:.7rem 1.4rem;border-radius:2rem;
     background:var(--card);color:var(--accent);font-weight:600;box-shadow:0 2px 14px #7a6bb41a;user-select:none}
   #adv summary::-webkit-details-marker{display:none}
   #adv summary::after{content:" ▾"} #adv[open] summary::after{content:" ▴"}
   #adv .card{margin-top:1rem;max-width:20rem}
   small{display:block;margin-top:1rem;color:var(--mute)}
-  #ainote{margin:0 0 1.25rem;padding:.6rem 1rem;border-radius:1rem;background:var(--card);color:var(--mute);font-size:.85rem}
-  #ainote a{color:var(--accent)}
+  #ainote{margin:1.25rem 0 0;padding:.6rem 1rem;border-radius:1rem;background:var(--card);color:var(--mute);font-size:.85rem}
+  #ainote a,#credit a{color:var(--accent)}
+  #credit{margin:.75rem 0 0;text-align:center;color:var(--mute);font-size:.85rem}
 </style>
 <main>
   <header><h1 data-i18n="title"></h1>
     <details id="langmenu"><summary data-aria="lang" aria-label="Language"><span aria-hidden="true">🌐</span><span id="langcur"></span></summary>
       <div id="langlist"></div></details></header>
-  <p id="ainote"><span data-i18n="aiNote"></span> <a id="issue" data-i18n="aiIssue" target="_blank" rel="noopener"></a></p>
   <form id="f" class="grid" onsubmit="return false">
     <section class="card" id="cin"><h2 data-i18n="indoor"></h2></section>
     <section class="card" id="cout"><h2 data-i18n="outdoor"></h2></section>
@@ -72,6 +73,8 @@
     </details>
   </form>
   <div id="out"></div>
+  <p id="ainote"><span data-i18n="aiNote"></span> <a id="issue" data-i18n="aiIssue" target="_blank" rel="noopener"></a></p>
+  <p id="credit">Made by <a href="https://github.com/Etrunon/ShouldIOpenTheWindow" target="_blank" rel="noopener">Etrunon</a> with AI friends</p>
 </main>
 <script>
 // Magnus formula; absolute humidity in g/m³. ponytail: ~0.5% accurate for -45..60 °C.
@@ -215,8 +218,8 @@ function calc() {
 function applyLang() {
   document.documentElement.lang = cur; document.title = L.page;
   langcur.textContent = L.name;
-  ainote.hidden = cur === "en";
-  issue.href = `https://github.com/Etrunon/tempHumidity/issues/new?title=${encodeURIComponent(`Translation mistake (${cur})`)}`;
+  ainote.hidden = cur === "en" || cur === "it";
+  issue.href = `https://github.com/Etrunon/ShouldIOpenTheWindow/issues/new?title=${encodeURIComponent(`Translation mistake (${cur})`)}`;
   for (const b of langlist.children) b.setAttribute("aria-pressed", b.dataset.l === cur);
   for (const e of document.querySelectorAll("[data-i18n]")) e.textContent = L[e.dataset.i18n];
   for (const e of document.querySelectorAll("[data-aria]")) e.setAttribute("aria-label", L[e.dataset.aria]);
