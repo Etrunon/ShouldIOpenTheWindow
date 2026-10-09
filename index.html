@@ -16,7 +16,12 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
   main{max-width:56rem;margin:0 auto;padding:1.5rem 16px 3rem}
-  h1{font-size:1.75rem;margin:.5rem 0 1.25rem;letter-spacing:-.02em}
+  header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1rem;margin:.5rem 0 1.25rem}
+  h1{font-size:1.75rem;margin:0;letter-spacing:-.02em}
+  #lang{display:flex;gap:.2rem;padding:.25rem;border-radius:2rem;background:var(--card);box-shadow:0 2px 14px #7a6bb41a}
+  #lang button{border:0;background:none;color:var(--mute);font:inherit;font-weight:600;padding:.5rem .85rem;
+    min-width:2.75rem;border-radius:2rem;cursor:pointer}
+  #lang button[aria-pressed=true]{background:var(--lilac);color:var(--ink)}
   .grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr))}
   .card{background:var(--card);border-radius:1.5rem;padding:1.25rem;box-shadow:0 2px 14px #7a6bb41a}
   .card h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1rem;
@@ -46,12 +51,15 @@
   small{display:block;margin-top:1rem;color:var(--mute)}
 </style>
 <main>
-  <h1>Open the window?</h1>
+  <header><h1 data-i18n="title"></h1>
+    <div id="lang" role="group" aria-label="Language"><button data-l="en" title="English">EN</button>
+      <button data-l="it" title="Italiano">IT</button><button data-l="fr" title="Français">FR</button>
+      <button data-l="de" title="Deutsch">DE</button></div></header>
   <form id="f" class="grid" onsubmit="return false">
-    <section class="card" id="cin"><h2>Indoor</h2></section>
-    <section class="card" id="cout"><h2>Outdoor</h2></section>
-    <details id="adv"><summary>Advanced</summary>
-      <section class="card" id="croom"><h2>Room</h2></section>
+    <section class="card" id="cin"><h2 data-i18n="indoor"></h2></section>
+    <section class="card" id="cout"><h2 data-i18n="outdoor"></h2></section>
+    <details id="adv"><summary data-i18n="advanced"></summary>
+      <section class="card" id="croom"><h2 data-i18n="room"></h2></section>
     </details>
   </form>
   <div id="out"></div>
@@ -62,21 +70,59 @@ const sat = t => 6.112 * Math.exp(17.62 * t / (243.12 + t));            // hPa
 const ah = (t, rh) => 216.7 * (rh / 100 * sat(t)) / (273.15 + t);
 console.assert(Math.abs(ah(20, 50) - 8.6) < 0.1, "AH(20°C,50%) should be ~8.6");
 
-// [card, name, label, unit, min, max, step, default]
+// All UI strings. Add a language = add a key here and an <option> above.
+const T = {
+  en: { page: "Window humidity calculator", title: "Open the window?", indoor: "Indoor", outdoor: "Outdoor", room: "Room",
+    advanced: "Advanced", temp: "Temperature", rh: "Relative humidity", vol: "Room volume", dec: "decrease", inc: "increase",
+    neutral: "Neutral: little moisture change", bring: "Opening brings humidity in", escape: "Opening lets humidity escape",
+    heatLoss: "Heat loss", heatGain: "Heat gain", mild: "mild", moderate: "moderate", strong: "strong", diff: "difference",
+    gained: "moisture gained", lost: "moisture lost", perM3: "per m³ of air swapped",
+    inAH: "indoor g/m³", outAH: "outdoor g/m³", rhWarm: "RH once outdoor air is warmed",
+    sensLost: "sensible heat lost per full swap", sensGained: "sensible heat gained per full swap",
+    water: "water exchanged (≈ {n} Wh latent)", bounds: "Upper bounds: assumes the room's air is fully replaced once." },
+  it: { page: "Calcolatore umidità finestra", title: "Apro la finestra?", indoor: "Interno", outdoor: "Esterno", room: "Stanza",
+    advanced: "Avanzate", temp: "Temperatura", rh: "Umidità relativa", vol: "Volume stanza", dec: "diminuisci", inc: "aumenta",
+    neutral: "Neutro: poca variazione di umidità", bring: "Aprendo entra umidità", escape: "Aprendo esce umidità",
+    heatLoss: "Perdita di calore", heatGain: "Guadagno di calore", mild: "lieve", moderate: "moderata", strong: "forte", diff: "di differenza",
+    gained: "umidità in entrata", lost: "umidità in uscita", perM3: "per m³ di aria scambiata",
+    inAH: "interno g/m³", outAH: "esterno g/m³", rhWarm: "UR dell'aria esterna una volta riscaldata",
+    sensLost: "calore sensibile perso per ricambio completo", sensGained: "calore sensibile guadagnato per ricambio completo",
+    water: "acqua scambiata (≈ {n} Wh latenti)", bounds: "Limiti massimi: presuppone che l'aria della stanza venga sostituita una volta per intero." },
+  fr: { page: "Calculateur d'humidité de fenêtre", title: "J'ouvre la fenêtre ?", indoor: "Intérieur", outdoor: "Extérieur", room: "Pièce",
+    advanced: "Avancé", temp: "Température", rh: "Humidité relative", vol: "Volume de la pièce", dec: "diminuer", inc: "augmenter",
+    neutral: "Neutre : peu de variation d'humidité", bring: "Ouvrir fait entrer de l'humidité", escape: "Ouvrir fait sortir l'humidité",
+    heatLoss: "Perte de chaleur", heatGain: "Gain de chaleur", mild: "faible", moderate: "modérée", strong: "forte", diff: "d'écart",
+    gained: "humidité gagnée", lost: "humidité perdue", perM3: "par m³ d'air renouvelé",
+    inAH: "intérieur g/m³", outAH: "extérieur g/m³", rhWarm: "HR de l'air extérieur une fois réchauffé",
+    sensLost: "chaleur sensible perdue par renouvellement complet", sensGained: "chaleur sensible gagnée par renouvellement complet",
+    water: "eau échangée (≈ {n} Wh latents)", bounds: "Valeurs maximales : suppose que l'air de la pièce est entièrement remplacé une fois." },
+  de: { page: "Fenster-Feuchterechner", title: "Fenster öffnen?", indoor: "Innen", outdoor: "Außen", room: "Raum",
+    advanced: "Erweitert", temp: "Temperatur", rh: "Relative Luftfeuchte", vol: "Raumvolumen", dec: "verringern", inc: "erhöhen",
+    neutral: "Neutral: kaum Feuchteänderung", bring: "Öffnen bringt Feuchtigkeit herein", escape: "Öffnen lässt Feuchtigkeit entweichen",
+    heatLoss: "Wärmeverlust", heatGain: "Wärmegewinn", mild: "gering", moderate: "mäßig", strong: "stark", diff: "Unterschied",
+    gained: "Feuchtigkeit gewonnen", lost: "Feuchtigkeit verloren", perM3: "pro m³ getauschter Luft",
+    inAH: "innen g/m³", outAH: "außen g/m³", rhWarm: "rel. Feuchte der Außenluft nach Erwärmung",
+    sensLost: "fühlbare Wärme verloren pro vollem Luftaustausch", sensGained: "fühlbare Wärme gewonnen pro vollem Luftaustausch",
+    water: "ausgetauschtes Wasser (≈ {n} Wh latent)", bounds: "Obergrenzen: nimmt an, dass die Raumluft einmal komplett ersetzt wird." },
+};
+let L = T.en;
+try { L = T[localStorage.lang] || T[navigator.language.slice(0, 2)] || T.en; } catch { L = T[navigator.language.slice(0, 2)] || T.en; }
+
+// [card, name, label key, unit, min, max, step, default]
 const FIELDS = [
-  ["cin", "ti", "Temperature", "°C", -10, 40, 0.5, 21],
-  ["cin", "hi", "Relative humidity", "%", 0, 100, 1, 60],
-  ["cout", "to", "Temperature", "°C", -30, 45, 0.5, 8],
-  ["cout", "ho", "Relative humidity", "%", 0, 100, 1, 80],
-  ["croom", "vol", "Room volume", "m³", 5, 200, 1, 50],
+  ["cin", "ti", "temp", "°C", -10, 40, 0.5, 21],
+  ["cin", "hi", "rh", "%", 0, 100, 1, 60],
+  ["cout", "to", "temp", "°C", -30, 45, 0.5, 8],
+  ["cout", "ho", "rh", "%", 0, 100, 1, 80],
+  ["croom", "vol", "vol", "m³", 5, 200, 1, 50],
 ];
 for (const [card, k, label, unit, min, max, step, val] of FIELDS)
   document.getElementById(card).insertAdjacentHTML("beforeend", `
-    <div class="f"><div class="row"><span>${label}</span><span>${unit}</span></div>
-      <div class="num"><button type="button" data-k="${k}" data-d="-${step}" aria-label="decrease">−</button>
+    <div class="f"><div class="row"><span data-i18n="${label}"></span><span>${unit}</span></div>
+      <div class="num"><button type="button" data-k="${k}" data-d="-${step}" data-aria="dec">−</button>
         <input name="${k}" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${val}">
-        <button type="button" data-k="${k}" data-d="${step}" aria-label="increase">+</button></div>
-      <input type="range" data-r="${k}" min="${min}" max="${max}" step="${step}" value="${val}" aria-label="${label}"></div>`);
+        <button type="button" data-k="${k}" data-d="${step}" data-aria="inc">+</button></div>
+      <input type="range" data-r="${k}" min="${min}" max="${max}" step="${step}" value="${val}" data-aria="${label}"></div>`);
 
 const num = k => f.elements[k], rng = k => f.querySelector(`[data-r=${k}]`);
 f.addEventListener("click", e => {          // +/- buttons
@@ -98,21 +144,34 @@ function calc() {
   // Energy for one full room-air swap (+ = you lose heat). Sensible: 1.2 kg/m³ × 1.005 kJ/kg/K ≈ 0.335 Wh/m³/K.
   // Latent: 2.45 kJ/g ≈ 0.68 Wh/g.
   const sens = 0.335 * (v.ti - v.to) * v.vol, lat = 0.68 * Math.abs(d) * v.vol;
-  const [verdict, colour] = Math.abs(d) < 0.5 ? ["Neutral: little moisture change", "--sky"]
-    : d > 0 ? ["Opening brings humidity in", "--peach"] : ["Opening lets humidity escape", "--mint"];
+  const [verdict, colour] = Math.abs(d) < 0.5 ? [L.neutral, "--sky"]
+    : d > 0 ? [L.bring, "--peach"] : [L.escape, "--mint"];
   out.style.background = `var(${colour})`;
   const dT = Math.abs(v.ti - v.to);         // ponytail: thresholds are rules of thumb, tune to taste
-  const strength = dT < 5 ? "mild" : dT < 15 ? "moderate" : "strong";
-  const heat = `<div class="stat"><b>${v.ti > v.to ? "Heat loss" : "Heat gain"}: ${strength}</b><span>${dT.toFixed(1)} °C difference</span></div>`;
-  const hum = `<div class="stat"><b>${d > 0 ? "+" : ""}${d.toFixed(1)} g/m³</b><span>${d > 0 ? "moisture gained" : "moisture lost"} per m³ of air swapped</span></div>`;
+  const strength = dT < 5 ? L.mild : dT < 15 ? L.moderate : L.strong;
+  const heat = `<div class="stat"><b>${v.ti > v.to ? L.heatLoss : L.heatGain}: ${strength}</b><span>${dT.toFixed(1)} °C ${L.diff}</span></div>`;
+  const hum = `<div class="stat"><b>${d > 0 ? "+" : ""}${d.toFixed(1)} g/m³</b><span>${d > 0 ? L.gained : L.lost} ${L.perM3}</span></div>`;
   out.innerHTML = `<div class="big">${verdict}</div>` + (!adv.open ? `<div class="stats">${hum}${heat}</div>` : `<div class="stats">${hum}${heat}
-    <div class="stat"><b>${i.toFixed(1)}</b><span>indoor g/m³</span></div>
-    <div class="stat"><b>${o.toFixed(1)}</b><span>outdoor g/m³</span></div>
-    <div class="stat"><b>${rhIn.toFixed(0)}%</b><span>RH once outdoor air is warmed</span></div>
-    <div class="stat"><b>${sens > 0 ? "−" : "+"}${Math.abs(sens).toFixed(0)} Wh</b><span>sensible heat ${sens > 0 ? "lost" : "gained"} per full swap</span></div>
-    <div class="stat"><b>${Math.abs(d * v.vol).toFixed(0)} g</b><span>water exchanged (≈ ${lat.toFixed(0)} Wh latent)</span></div></div>
-    <small>Upper bounds: assumes the room's air is fully replaced once.</small>`);
+    <div class="stat"><b>${i.toFixed(1)}</b><span>${L.inAH}</span></div>
+    <div class="stat"><b>${o.toFixed(1)}</b><span>${L.outAH}</span></div>
+    <div class="stat"><b>${rhIn.toFixed(0)}%</b><span>${L.rhWarm}</span></div>
+    <div class="stat"><b>${sens > 0 ? "−" : "+"}${Math.abs(sens).toFixed(0)} Wh</b><span>${sens > 0 ? L.sensLost : L.sensGained}</span></div>
+    <div class="stat"><b>${Math.abs(d * v.vol).toFixed(0)} g</b><span>${L.water.replace("{n}", lat.toFixed(0))}</span></div></div>
+    <small>${L.bounds}</small>`);
 }
+function applyLang() {
+  document.documentElement.lang = cur; document.title = L.page;
+  for (const b of lang.children) b.setAttribute("aria-pressed", b.dataset.l === cur);
+  for (const e of document.querySelectorAll("[data-i18n]")) e.textContent = L[e.dataset.i18n];
+  for (const e of document.querySelectorAll("[data-aria]")) e.setAttribute("aria-label", L[e.dataset.aria]);
+  calc();
+}
+let cur = Object.keys(T).find(k => T[k] === L);
+lang.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  cur = b.dataset.l; L = T[cur]; try { localStorage.lang = cur; } catch {}
+  applyLang();
+});
 adv.addEventListener("toggle", calc);
-calc();
+applyLang();
 </script>
