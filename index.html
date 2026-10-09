@@ -1,0 +1,118 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Window humidity calculator</title>
+<style>
+  :root{
+    --bg:#f6f3fb; --card:#fff; --ink:#2b2a35; --mute:#74718a; --line:#e6e1f2;
+    --mint:#c9f0dd; --sky:#cfe6fb; --peach:#fde1cf; --lilac:#e3d9fb; --accent:#8f7ae0;
+    --in:#f3edff; --out:#e6f2fd;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#1c1b26; --card:#272636; --ink:#eeecf7; --mute:#a09cb8; --line:#373550;
+    --mint:#2f5446; --sky:#2c4863; --peach:#6a4a3a; --lilac:#43396b; --accent:#b3a2f5;
+    --in:#2f2a47; --out:#27384d;
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:56rem;margin:0 auto;padding:1.5rem 16px 3rem}
+  h1{font-size:1.75rem;margin:.5rem 0 1.25rem;letter-spacing:-.02em}
+  .grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr))}
+  .card{background:var(--card);border-radius:1.5rem;padding:1.25rem;box-shadow:0 2px 14px #7a6bb41a}
+  .card h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1rem;
+    display:inline-block;padding:.3rem .8rem;border-radius:2rem;color:var(--ink)}
+  #cin h2{background:var(--lilac)} #cout h2{background:var(--sky)} #croom h2{background:var(--peach)}
+  .f{margin-bottom:1.1rem}
+  .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;color:var(--mute);font-size:.9rem}
+  .num{display:flex;align-items:center;background:var(--bg);border-radius:1rem;border:1px solid var(--line)}
+  .num button{width:3rem;height:3rem;border:0;background:none;color:var(--accent);font-size:1.5rem;cursor:pointer;border-radius:1rem}
+  .num button:active{background:var(--line)}
+  .num input{flex:1;min-width:0;height:3rem;border:0;background:none;color:var(--ink);text-align:center;font-size:1.25rem;font-weight:600;font-family:inherit}
+  .num input:focus{outline:none}
+  .num:focus-within{border-color:var(--accent)}
+  input[type=range]{width:100%;height:2rem;margin:.4rem 0 0;accent-color:var(--accent)}
+  #out{margin-top:1rem;border-radius:1.5rem;padding:1.5rem;background:var(--lilac)}
+  #out .big{font-size:1.4rem;font-weight:700;letter-spacing:-.01em;margin-bottom:1rem}
+  .stats{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr))}
+  .stat{background:#ffffff88;border-radius:1rem;padding:.75rem 1rem}
+  @media (prefers-color-scheme:dark){.stat{background:#00000026}}
+  .stat b{display:block;font-size:1.3rem}.stat span{color:var(--mute);font-size:.8rem}
+  #adv{grid-column:1/-1}
+  #adv summary{display:inline-block;list-style:none;cursor:pointer;padding:.7rem 1.4rem;border-radius:2rem;
+    background:var(--card);color:var(--accent);font-weight:600;box-shadow:0 2px 14px #7a6bb41a;user-select:none}
+  #adv summary::-webkit-details-marker{display:none}
+  #adv summary::after{content:" ▾"} #adv[open] summary::after{content:" ▴"}
+  #adv .card{margin-top:1rem;max-width:20rem}
+  small{display:block;margin-top:1rem;color:var(--mute)}
+</style>
+<main>
+  <h1>Open the window?</h1>
+  <form id="f" class="grid" onsubmit="return false">
+    <section class="card" id="cin"><h2>Indoor</h2></section>
+    <section class="card" id="cout"><h2>Outdoor</h2></section>
+    <details id="adv"><summary>Advanced</summary>
+      <section class="card" id="croom"><h2>Room</h2></section>
+    </details>
+  </form>
+  <div id="out"></div>
+</main>
+<script>
+// Magnus formula; absolute humidity in g/m³. ponytail: ~0.5% accurate for -45..60 °C.
+const sat = t => 6.112 * Math.exp(17.62 * t / (243.12 + t));            // hPa
+const ah = (t, rh) => 216.7 * (rh / 100 * sat(t)) / (273.15 + t);
+console.assert(Math.abs(ah(20, 50) - 8.6) < 0.1, "AH(20°C,50%) should be ~8.6");
+
+// [card, name, label, unit, min, max, step, default]
+const FIELDS = [
+  ["cin", "ti", "Temperature", "°C", -10, 40, 0.5, 21],
+  ["cin", "hi", "Relative humidity", "%", 0, 100, 1, 60],
+  ["cout", "to", "Temperature", "°C", -30, 45, 0.5, 8],
+  ["cout", "ho", "Relative humidity", "%", 0, 100, 1, 80],
+  ["croom", "vol", "Room volume", "m³", 5, 200, 1, 50],
+];
+for (const [card, k, label, unit, min, max, step, val] of FIELDS)
+  document.getElementById(card).insertAdjacentHTML("beforeend", `
+    <div class="f"><div class="row"><span>${label}</span><span>${unit}</span></div>
+      <div class="num"><button type="button" data-k="${k}" data-d="-${step}" aria-label="decrease">−</button>
+        <input name="${k}" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${val}">
+        <button type="button" data-k="${k}" data-d="${step}" aria-label="increase">+</button></div>
+      <input type="range" data-r="${k}" min="${min}" max="${max}" step="${step}" value="${val}" aria-label="${label}"></div>`);
+
+const num = k => f.elements[k], rng = k => f.querySelector(`[data-r=${k}]`);
+f.addEventListener("click", e => {          // +/- buttons
+  const b = e.target.closest("button"); if (!b) return;
+  const n = num(b.dataset.k);
+  n.value = Math.round((+n.value + +b.dataset.d) * 100) / 100; sync(b.dataset.k);
+});
+f.addEventListener("input", e => sync(e.target.name || e.target.dataset.r, e.target.type === "range"));
+function sync(k, fromRange) {
+  if (fromRange) num(k).value = rng(k).value; else rng(k).value = num(k).value;
+  calc();
+}
+
+function calc() {
+  const v = Object.fromEntries(FIELDS.map(([, k]) => [k, +num(k).value]));
+  if (Object.values(v).some(Number.isNaN)) return;
+  const i = ah(v.ti, v.hi), o = ah(v.to, v.ho), d = o - i;
+  const rhIn = 100 * o / ah(v.ti, 100);     // outdoor air warmed to indoor temp
+  // Energy for one full room-air swap (+ = you lose heat). Sensible: 1.2 kg/m³ × 1.005 kJ/kg/K ≈ 0.335 Wh/m³/K.
+  // Latent: 2.45 kJ/g ≈ 0.68 Wh/g.
+  const sens = 0.335 * (v.ti - v.to) * v.vol, lat = 0.68 * Math.abs(d) * v.vol;
+  const [verdict, colour] = Math.abs(d) < 0.5 ? ["Neutral: little moisture change", "--sky"]
+    : d > 0 ? ["Opening brings humidity in", "--peach"] : ["Opening lets humidity escape", "--mint"];
+  out.style.background = `var(${colour})`;
+  const dT = Math.abs(v.ti - v.to);         // ponytail: thresholds are rules of thumb, tune to taste
+  const strength = dT < 5 ? "mild" : dT < 15 ? "moderate" : "strong";
+  const heat = `<div class="stat"><b>${v.ti > v.to ? "Heat loss" : "Heat gain"}: ${strength}</b><span>${dT.toFixed(1)} °C difference</span></div>`;
+  const hum = `<div class="stat"><b>${d > 0 ? "+" : ""}${d.toFixed(1)} g/m³</b><span>${d > 0 ? "moisture gained" : "moisture lost"} per m³ of air swapped</span></div>`;
+  out.innerHTML = `<div class="big">${verdict}</div>` + (!adv.open ? `<div class="stats">${hum}${heat}</div>` : `<div class="stats">${hum}${heat}
+    <div class="stat"><b>${i.toFixed(1)}</b><span>indoor g/m³</span></div>
+    <div class="stat"><b>${o.toFixed(1)}</b><span>outdoor g/m³</span></div>
+    <div class="stat"><b>${rhIn.toFixed(0)}%</b><span>RH once outdoor air is warmed</span></div>
+    <div class="stat"><b>${sens > 0 ? "−" : "+"}${Math.abs(sens).toFixed(0)} Wh</b><span>sensible heat ${sens > 0 ? "lost" : "gained"} per full swap</span></div>
+    <div class="stat"><b>${Math.abs(d * v.vol).toFixed(0)} g</b><span>water exchanged (≈ ${lat.toFixed(0)} Wh latent)</span></div></div>
+    <small>Upper bounds: assumes the room's air is fully replaced once.</small>`);
+}
+adv.addEventListener("toggle", calc);
+calc();
+</script>
