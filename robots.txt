@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://etrunon.duckdns.org/sitemap.xml
