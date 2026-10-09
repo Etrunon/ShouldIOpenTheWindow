@@ -79,20 +79,20 @@
   #credit{margin:.75rem 0 0;text-align:center;color:var(--mute);font-size:.85rem}
 </style>
 <main>
-  <header><h1 data-i18n="title"></h1>
+  <header><h1 data-i18n="title">Open the window?</h1>
     <div id="bar"><label class="sw"><input type="checkbox" id="unit" role="switch" aria-label="°C / °F"><i></i><span>°C</span><span>°F</span></label>
-    <details id="langmenu"><summary data-aria="lang" aria-label="Language"><span aria-hidden="true">🌐</span><span id="langcur"></span></summary>
+    <details id="langmenu"><summary data-aria="lang" aria-label="Language"><span aria-hidden="true">🌐</span><span id="langcur">English</span></summary>
       <div id="langlist"></div></details></div></header>
   <form id="f" class="grid" onsubmit="return false">
-    <section class="card" id="cin"><h2 data-i18n="indoor"></h2></section>
-    <section class="card" id="cout"><h2 data-i18n="outdoor"></h2></section>
-    <details id="adv"><summary data-i18n="advanced"></summary>
-      <section class="card" id="croom"><h2 data-i18n="room"></h2></section>
+    <section class="card" id="cin"><h2 data-i18n="indoor">Indoor</h2></section>
+    <section class="card" id="cout"><h2 data-i18n="outdoor">Outdoor</h2></section>
+    <details id="adv"><summary data-i18n="advanced">Advanced</summary>
+      <section class="card" id="croom"><h2 data-i18n="room">Room</h2></section>
     </details>
   </form>
   <div id="out"></div>
-  <p id="ainote"><span data-i18n="aiNote"></span> <a id="issue" data-i18n="aiIssue" target="_blank" rel="noopener"></a></p>
-  <p id="privacy" data-i18n="privacy"></p>
+  <p id="ainote" hidden><span data-i18n="aiNote">Translations are AI-generated.</span> <a id="issue" data-i18n="aiIssue" target="_blank" rel="noopener">Spot a mistake? Open an issue on GitHub</a></p>
+  <p id="privacy" data-i18n="privacy">No cookies are used and no information is sent to any server. Only your language and temperature unit are saved on this device.</p>
   <p id="credit">Made by <a href="https://github.com/Etrunon/ShouldIOpenTheWindow" target="_blank" rel="noopener">Etrunon</a> with AI friends</p>
 </main>
 <script>
